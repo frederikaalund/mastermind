@@ -35,6 +35,8 @@ void draw_hidden_code(std::vector<int> code);
 
 void initialize_terminal();
 
+void reset_terminal();
+
 /*
  * Mastermind specific output settings.
  */

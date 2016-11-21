@@ -218,6 +218,8 @@ void initialize_terminal() {
     /// Ensure a clean game start.
     clear_screen();
 
+    hide_cursor();
+
     /// Disable the terminal output.
     termios old_term;
     /// Get the current STDIN settings.
@@ -230,6 +232,26 @@ void initialize_terminal() {
     /// Get a char on key press - do not wait for 'enter'.
     termios no_block = new_term;
     no_block.c_lflag &= ~ICANON;
+
+    /// Commit the new STD I/O terminal settings.
+    tcsetattr(STDIN_FILENO, TCSANOW, &no_block);
+}
+
+void reset_terminal() {
+    show_cursor();
+
+    /// Disable the terminal output.
+    termios old_term;
+    /// Get the current STDIN settings.
+    tcgetattr(STDIN_FILENO, &old_term);
+
+    /// Enable the terminal echo.
+    termios new_term = old_term;
+    new_term.c_lflag |= ECHO;
+
+    /// Get a char on 'enter' press.
+    termios no_block = new_term;
+    no_block.c_lflag |= ICANON;
 
     /// Commit the new STD I/O terminal settings.
     tcsetattr(STDIN_FILENO, TCSANOW, &no_block);

@@ -235,5 +235,7 @@ int main() {
         draw_hidden_code(code);
     }
 
+    reset_terminal();
+
     return 0;
 }
