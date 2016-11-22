@@ -7,16 +7,17 @@ using namespace std;
 
 int problem_size = 4;
 
-int play(const vector<int> code) {
+void play(const vector<int> &code) {
 
     /// We always start with 12 guesses - the zero row is the hidden code.
     int guess_counter = 12;
     int current_guess_index = 0;
 
     /// The current guess - all initialized to the first color - black.
-    vector<int> guess(problem_size);
+    vector<int> guess((unsigned long) problem_size);
 
-    char cmd;
+    /// Dummy value -  do not use in the switch!
+    char cmd = '-';
     while ('q' != cmd) {
 
         /// Re-draw the guess and marker after each change.
@@ -25,16 +26,16 @@ int play(const vector<int> code) {
         }
         draw_col_marker(guess_counter, current_guess_index, problem_size);
 
-        cmd = getchar();
+        cmd = (char) getchar();
         switch (cmd) {
             case 'w':
-                guess[current_guess_index] = (guess[current_guess_index] + 1) % 8;
+                guess[current_guess_index] = (guess[current_guess_index] + 1) % COLOR_COUNT;
                 break;
 
             case 's':
                 guess[current_guess_index]--;
                 if (guess[current_guess_index] < 0) {
-                    guess[current_guess_index] = 7;
+                    guess[current_guess_index] = COLOR_COUNT - 1;
                 }
                 break;
 
@@ -53,10 +54,10 @@ int play(const vector<int> code) {
 
                 /// When 12 guesses have been spent, the player have lost.
                 if (1 == guess_counter) {
-                    return -1;
+                    return;
                 }
 
-                /// Make a copy of the code and guess, which can be changed .
+                /// Make a copy of the code and guess, which can be changed.
                 vector<int> tmp_code = code;
                 vector<int> tmp_guess = guess;
 
@@ -68,12 +69,13 @@ int play(const vector<int> code) {
                 for (int i = 0; i < guess.size(); ++i) {
                     if (tmp_code[i] == tmp_guess[i]) {
                         correct_guess_counter++;
+                        ///
                         tmp_code[i] = -1;
-                        tmp_guess[i] = -2;
+                        tmp_guess[i] = -1;
                     }
                 }
 
-                /// Detremine the number of correct colors found, at the incorrect poisiont.
+                /// Determine the number of correct colors, at incorrect position.
                 for (int i = 0; i < guess.size(); ++i) {
                     /// If color not found in the solution - then.
                     if (tmp_code[i] >= 0) {
@@ -83,7 +85,7 @@ int play(const vector<int> code) {
                             if (tmp_code[i] == tmp_guess[j]) {
                                 correct_color_counter++;
                                 tmp_code[i] = -1;
-                                tmp_guess[j] = -2;
+                                tmp_guess[j] = -1;
                                 break;
                             }
                         }
@@ -91,9 +93,9 @@ int play(const vector<int> code) {
                 }
 
 
-                /// Print the feedback to the current guess.
-                /// The feedback should not indicate the position of the found feedback. Therefore the
-                //// feedback is printed in order of: correct guess and then
+                /// Print the feedback to the current guess. The feedback should not
+                /// indicate the position of the found feedback. Therefore the
+                /// feedback is printed in order of: correct guess and then
                 for (int j = 0; j < correct_guess_counter; ++j) {
                     draw_feedback(CORRECT_POS_COLOR, guess_counter, j, problem_size);
                 }
@@ -103,24 +105,26 @@ int play(const vector<int> code) {
 
                 /// If all colors was found in the correct position, the game is won.
                 if (problem_size == correct_guess_counter) {
-                    return 0;
+                    return;
                 }
 
                 guess_counter--;
                 break;
         }
     }
+    return;
 }
 
-void make_new_code(vector<int> &code) {
 
-    /// Ensure that the old code is removed.
-    code.clear();
-    /// Create a new code of the problem size
-    code.resize(problem_size);
+void set_new_code(vector<int> &code) {
+
+    /// Reset the code to the default black, while resizeing.
+    code.assign((unsigned long) problem_size, 0);
 
     int current_index = 0;
-    char cmd;
+
+    /// Dummy value -  do not use in the switch!
+    char cmd = '-';
     while ('q' != cmd) {
 
         for (int k = 0; k < code.size(); ++k) {
@@ -128,7 +132,7 @@ void make_new_code(vector<int> &code) {
         }
         draw_col_marker(0, current_index, problem_size);
 
-        cmd = getchar();
+        cmd = (char) getchar();
         switch (cmd) {
             case 'w':
                 code[current_index] = (code[current_index] + 1) % 8;
@@ -161,31 +165,29 @@ void make_new_code(vector<int> &code) {
 
 void make_random_code(vector<int> &code) {
 
-    /// Ensure that the old code is removed.
-    code.clear();
-
     /// Make a new random problem with the available colors.
-    /// We do not allow duplicates in this game.
+    /// We do not allow duplicates in the random code.
     vector<int> new_code = {0, 1, 2, 3, 4, 5, 6, 7};
-    srand(unsigned(time(NULL)));
-    random_shuffle(new_code.begin(), new_code.end());
 
-    /// Select only the amount of code needed.
-    for (int i = 0; i < problem_size; ++i) {
-        code.push_back(new_code[i]);
-    }
+    random_device rd;
+    mt19937 mt(rd());
+    shuffle(new_code.begin(), new_code.end(), mt);
+
+    code.assign(new_code.begin(), new_code.begin() + problem_size);
 }
+
 
 int new_game(vector<int> &code) {
 
     int player_count = 1;
-    char cmd;
+    /// Dummy value -  do not use in the switch!
+    char cmd = '-';
     while ('q' != cmd) {
 
         /// Redraw the menu, showing the current settings.
         draw_menu(problem_size, player_count);
 
-        cmd = getchar();
+        cmd = (char) getchar();
         switch (cmd) {
             case '1':
                 player_count = 1;
@@ -208,13 +210,14 @@ int new_game(vector<int> &code) {
                 } else {
                     /// Clear previous games, before the user select a new code.
                     draw_new_game(problem_size);
-                    make_new_code(code);
+                    set_new_code(code);
                 }
                 return 1;
             case 'q':
                 return 0;
         }
     }
+    return 0;
 }
 
 
@@ -222,7 +225,7 @@ int main() {
 
     vector<int> code;
 
-    /// Clear and setup the terminal.
+    /// Clear and setup the terminal before the game interact with the user.
     initialize_terminal();
     draw_new_game(problem_size);
 
@@ -232,7 +235,7 @@ int main() {
 
         play(code);
 
-        draw_hidden_code(code);
+        show_hidden_code(code);
     }
 
     reset_terminal();

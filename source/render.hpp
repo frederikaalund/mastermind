@@ -31,7 +31,7 @@ void draw_new_game(int problem_size);
 
 void draw_menu(int level, int player_count);
 
-void draw_hidden_code(std::vector<int> code);
+void show_hidden_code(std::vector<int> &code);
 
 void initialize_terminal();
 
@@ -50,7 +50,8 @@ void reset_terminal();
 #define  PURPLE       5
 #define  CYAN         6
 #define  WHITE        7
-#define  GREY         8
+
+#define COLOR_COUNT    8
 
 /// Game colors
 #define  MARKER                 239

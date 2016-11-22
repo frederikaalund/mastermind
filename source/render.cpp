@@ -64,7 +64,7 @@ void draw_square(int row, int col, int height, int width, int color) {
     set_background_color(color);
     set_cursor(row, col);
 
-    string row_string(width, ' ');
+    string row_string((unsigned long) width, ' ');
     for (int i = 0; i < height; ++i) {
         printf("%s", row_string.c_str());
         row++;
@@ -190,6 +190,9 @@ void draw_menu(int level, int player_count) {
     printf("Start / accept - press space\n");
 
     set_cursor(menu_row_margin + 20, menu_col_margin);
+    printf("Use 'w', 's', 'a', 'd' to set a the pegs.\n");
+
+    set_cursor(menu_row_margin + 22, menu_col_margin);
     printf("Concede / quit - press q\n");
 
 
@@ -203,8 +206,8 @@ void draw_menu(int level, int player_count) {
     draw_square(menu_row_margin + player_count + 11, menu_col_margin - 2, 1, 1, BLUE);
 }
 
-/// This will show the hidden code when game over (lost or won).
-void draw_hidden_code(vector<int> code) {
+/// Shows the hidden code when game over (lost or won).
+void show_hidden_code(vector<int> &code) {
     for (int i = 0; i < code.size(); ++i) {
         draw_pegs(code[i], 0, i);
     }
