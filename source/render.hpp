@@ -37,6 +37,7 @@ void initialize_terminal();
 
 void reset_terminal();
 
+
 /*
  * Mastermind specific output settings.
  */
@@ -51,7 +52,6 @@ void reset_terminal();
 #define  WHITE        7
 #define  GREY         8
 
-
 /// Game colors
 #define  MARKER                 239
 #define  BOARD_COLOR            242
@@ -62,17 +62,46 @@ void reset_terminal();
 #define  CORRECT_COLOR            7
 
 /// Game dimmensions
-const int board_height    = 55;
-const int board_width     = 125;
+const int board_height      = 55;
+const int board_width       = 125;
 
-const int menu_row_margin = 18;
-const int menu_col_margin = 80;
+/// The margin from the top of the terminal, to the start of the menu area.
+const int menu_row_margin   = 18;
+/// The margin from the side of the terminal, to the start of the menu area.
+const int menu_col_margin   = 80;
 
-const int game_row_margin = 3;
-const int game_col_margin = 5;
-const int guess_margin    = 10;
-const int game_height     = board_height + game_row_margin;
-const int game_width      = board_width + game_col_margin;
+/// The margin around the game area.
+const int game_row_margin   = 3;
+const int game_col_margin   = 5;
+
+/// The margin from the side of the terminal, to the start of the game area.
+const int peg_row_margin    = 5;
+const int peg_col_margin    = 10;
+
+/// The dimensions of ethe peg.
+const int peg_width         = 5;
+const int peg_height        = 3;
+/// The dimensions of the peg with a border.
+const int peg_area_width    = peg_width + 1;
+const int peg_area_height   = peg_height + 1;
+
+/// Feedback indicator - white or red indicator of number of correct colors and guesses.
+const int feedback_width    = 2;
+const int feedback_height   = 1;
+/// The dimensions of the peg with a border.
+const int feedback_area_width    = feedback_width + 1;
+const int feedback_area_height   = feedback_height + 1;
+
+/// Colum marker - which show the current peg.
+const int col_marker_width    = peg_width;
+const int col_marker_height   = 1;
+
+/// The distance from top to the fist column marker.
+const int col_row_margin    = 8;
+
+const int game_height       = board_height + game_row_margin;
+const int game_width        = board_width + game_col_margin;
+
 
 
 #endif //MASTERMIND_RENDER_H

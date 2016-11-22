@@ -16,7 +16,6 @@
 
 #define ESC 0x1B
 
-
 std::vector<std::string> game_banner = {"   _____      _     _                                ",
                                         "  / ____|    | |   | |                               ",
                                         " | |     ___ | |__ | |__   __ _ _ __ ____             ",
@@ -60,20 +59,16 @@ void show_cursor() {
     printf("%c[?25h", ESC);
 }
 
-
 void draw_square(int row, int col, int height, int width, int color) {
-
-    int current_row = row;
 
     set_background_color(color);
     set_cursor(row, col);
 
     string row_string(width, ' ');
-
     for (int i = 0; i < height; ++i) {
         printf("%s", row_string.c_str());
-        current_row++;
-        set_cursor(current_row, col);
+        row++;
+        set_cursor(row, col);
     }
 }
 
@@ -91,84 +86,85 @@ void draw_ascii_art(vector<string> art, int row, int col) {
 
 void draw_pegs(int color, int row, int col) {
 
-    int target_row = 5 + row * 4;
-    int height = 3;
+    int target_row = peg_row_margin + row * peg_area_height;
+    int target_col = peg_col_margin + col * peg_area_width;
 
-    int target_col = guess_margin + col * 6;
-    int width = 5;
-
-    draw_square(target_row, target_col, height, width, color);
+    draw_square(target_row, target_col, peg_height, peg_width, color);
 }
 
 void draw_feedback(int color, int row, int col, int problem_size) {
 
-    int height = 1;
-    int width = 2;
+    int target_row = peg_row_margin + row * peg_area_height;
 
-
-    int target_row = 5 + row * 4;
-
+    /// We want two columns of feedback, thus if the col overflow
+    /// half the problem size, then set the col back and goto newt feedback row.
+    /// Note that coordinates are zero index, while problem size is one index,
+    /// - Transform col to 1 indexed, by adding 1 to col.
     if (col + 1 > problem_size / 2) {
         col = col - problem_size / 2;
-        target_row += 2;
+        target_row += feedback_area_height;
     }
 
-    int target_col = col * 3;
+    int target_col = col * feedback_area_width;
 
-    int problem_width = 6 + (problem_size + 1) * 6;
+    int problem_width = peg_row_margin + (problem_size + 1) * peg_area_width;
 
     target_col += problem_width;
 
-    draw_square(target_row, target_col, height, width, color);
+    draw_square(target_row, target_col, feedback_height, feedback_width, color);
 }
 
 void draw_col_marker(int row, int col, int problem_size) {
 
-    int problem_width = 6 + (problem_size + 1) * 6;
+    int problem_width = peg_row_margin + (problem_size + 1) * peg_area_width;
 
-    int target_row = 8 + row * 4;
-    int height = 1;
+    int target_row = col_row_margin + row * peg_area_height;
+    int target_col = peg_col_margin + col * peg_area_width;
 
-    int target_col = guess_margin + col * 6;
-    int width = 5;
-
-    int prev_row = 8 + (row + 1) * 4;
+    /// Clear the entire colum marker area for the previous marker row.
+    int prev_row = col_row_margin + (row + 1) * peg_area_height;
+    /// Only delete if there was a previous marker in the game area.
     if (prev_row < game_height) {
-        draw_square(prev_row, guess_margin, height, problem_width, BOARD_COLOR);
+        draw_square(prev_row, peg_col_margin, col_marker_height, problem_width, BOARD_COLOR);
     }
 
-    draw_square(target_row, guess_margin, height, problem_width, BOARD_COLOR);
-
-    draw_square(target_row, target_col, height, width, MARKER);
+    /// Clear the entire colum marker area - delete the marker.
+    draw_square(target_row, peg_col_margin, col_marker_height, problem_width, BOARD_COLOR);
+    /// Re-draw the marker at the current position.
+    draw_square(target_row, target_col, col_marker_height, col_marker_width, MARKER);
 }
 
 void draw_new_game(int problem_size) {
     draw_square(game_row_margin, game_col_margin, board_height, board_width, BOARD_COLOR);
 
+    // TODO: remove Cobham banner before release.
     draw_ascii_art(game_banner, 5, 74);
 
+    /// Draw the top row with the hidden pegs.
     for (int j = 0; j < problem_size; ++j) {
         draw_pegs(HIDDEN_CODE_COLOR, 0, j);
     }
 
+    /// Draw the next 12 rows with unmarked pegs.
     for (int i = 1; i < 13; ++i) {
         for (int j = 0; j < problem_size; ++j) {
             draw_pegs(UNMARKED_COLOR, i, j);
         }
     }
 
+    /// Draw the 12 rows of unmarked feedback indicators.
     for (int i = 1; i < 13; ++i) {
         for (int j = 0; j < problem_size; ++j) {
             draw_feedback(UNMARKED_COLOR, i, j, problem_size);
         }
     }
 
+    /// Draw two rows with the available colors in order.
     for (int j = 0; j < 4; ++j) {
         draw_pegs(j, 10, j + 13);
+        draw_pegs(j+4, 11, j + 13);
     }
-    for (int j = 4; j < 8; ++j) {
-        draw_pegs(j, 11, j + 9);
-    }
+
 }
 
 void draw_menu(int level, int player_count) {
@@ -207,6 +203,7 @@ void draw_menu(int level, int player_count) {
     draw_square(menu_row_margin + player_count + 11, menu_col_margin - 2, 1, 1, BLUE);
 }
 
+/// This will show the hidden code when game over (lost or won).
 void draw_hidden_code(vector<int> code) {
     for (int i = 0; i < code.size(); ++i) {
         draw_pegs(code[i], 0, i);

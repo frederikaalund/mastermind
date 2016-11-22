@@ -13,7 +13,7 @@ int play(const vector<int> code) {
     int guess_counter = 12;
     int current_guess_index = 0;
 
-    /// The current guess - all initialized to zero.
+    /// The current guess - all initialized to the first color - black.
     vector<int> guess(problem_size);
 
     char cmd;
@@ -61,7 +61,7 @@ int play(const vector<int> code) {
                 vector<int> tmp_guess = guess;
 
                 int correct_guess_counter = 0;
-                int correct_color = 0;
+                int correct_color_counter = 0;
 
                 /// Count the corect placed gusses. By comparing the guess
                 /// to the code - index by index.
@@ -81,7 +81,7 @@ int play(const vector<int> code) {
                         for (int j = 0; j < guess.size(); ++j) {
                             /// If the code color is uniq found in the guess:
                             if (tmp_code[i] == tmp_guess[j]) {
-                                correct_color++;
+                                correct_color_counter++;
                                 tmp_code[i] = -1;
                                 tmp_guess[j] = -2;
                                 break;
@@ -97,7 +97,7 @@ int play(const vector<int> code) {
                 for (int j = 0; j < correct_guess_counter; ++j) {
                     draw_feedback(CORRECT_POS_COLOR, guess_counter, j, problem_size);
                 }
-                for (int j = correct_guess_counter; j < correct_color + correct_guess_counter; ++j) {
+                for (int j = correct_guess_counter; j < correct_color_counter + correct_guess_counter; ++j) {
                     draw_feedback(CORRECT_COLOR, guess_counter, j, problem_size);
                 }
 
@@ -176,7 +176,7 @@ void make_random_code(vector<int> &code) {
     }
 }
 
-int setup_new_game(vector<int> &code) {
+int new_game(vector<int> &code) {
 
     int player_count = 1;
     char cmd;
@@ -226,7 +226,7 @@ int main() {
     initialize_terminal();
     draw_new_game(problem_size);
 
-    while (setup_new_game(code)) {
+    while (new_game(code)) {
 
         draw_new_game(problem_size);
 
