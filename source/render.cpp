@@ -217,7 +217,6 @@ void initialize_terminal() {
 
     /// Ensure a clean game start.
     clear_screen();
-
     hide_cursor();
 
     /// Disable the terminal output.

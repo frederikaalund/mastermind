@@ -177,7 +177,7 @@ void make_random_code(vector<int> &code) {
 }
 
 
-int new_game(vector<int> &code) {
+int setup_new_game(vector<int> &code) {
 
     int player_count = 1;
     /// Dummy value -  do not use in the switch!
@@ -229,7 +229,7 @@ int main() {
     initialize_terminal();
     draw_new_game(problem_size);
 
-    while (new_game(code)) {
+    while (setup_new_game(code)) {
 
         draw_new_game(problem_size);
 
