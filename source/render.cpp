@@ -3,8 +3,12 @@
 #include <iostream>
 
 /// Control stdio local feedback.
-#include <termio.h>
 #include <zconf.h>
+#ifdef __APPLE__
+#include <termios.h>
+#else
+#include <termio.h>
+#endif
 
 
 /*
