@@ -30,14 +30,14 @@ std::vector<std::string> game_banner = {
 
 using namespace std;
 
-void set_font_color(int color) {
+void set_font_color(color color) {
     /// '38;5' is the command to set color from preset ANSI RGB color palette.
-    printf("%c[38;5;%dm", ESC, color);
+    printf("%c[38;5;%dm", ESC, static_cast<int>(color));
 }
 
-void set_background_color(int color) {
+void set_background_color(color color) {
     /// 48;5 is the 'extended set background color' command,  the final 'm' is the 'graphic rendition' options.
-    printf("%c[48;5;%dm", ESC, color);
+    printf("%c[48;5;%dm", ESC, static_cast<int>(color));
 }
 
 void clear_screen() {
@@ -59,7 +59,7 @@ void show_cursor() {
     printf("%c[?25h", ESC);
 }
 
-void draw_square(int row, int col, int height, int width, int color) {
+void draw_square(int row, int col, int height, int width, color color) {
 
     set_background_color(color);
     set_cursor(row, col);
@@ -74,8 +74,8 @@ void draw_square(int row, int col, int height, int width, int color) {
 
 void draw_ascii_art(vector<string> art, int row, int col) {
 
-    set_font_color(BLACK);
-    set_background_color(BOARD_COLOR);
+    set_font_color(color::black);
+    set_background_color(color::black);
     set_cursor(row, col);
     for (int i = 0; i < art.size(); ++i) {
         printf("%s\n", art[i].c_str());
@@ -84,7 +84,7 @@ void draw_ascii_art(vector<string> art, int row, int col) {
     }
 }
 
-void draw_pegs(int color, int row, int col) {
+void draw_pegs(color color, int row, int col) {
 
     int target_row = peg_row_margin + row * peg_area_height;
     int target_col = peg_col_margin + col * peg_area_width;
@@ -92,7 +92,7 @@ void draw_pegs(int color, int row, int col) {
     draw_square(target_row, target_col, peg_height, peg_width, color);
 }
 
-void draw_feedback(int color, int row, int col, int problem_size) {
+void draw_feedback(color color, int row, int col, int problem_size) {
 
     int target_row = peg_row_margin + row * peg_area_height;
 
@@ -160,16 +160,20 @@ void draw_new_game(int problem_size) {
     }
 
     /// Draw two rows with the available colors in order.
+	auto color_row1 = color::black;
+	auto color_row2 = color::blue;
     for (int j = 0; j < 4; ++j) {
-        draw_pegs(j, 10, j + 13);
-        draw_pegs(j+4, 11, j + 13);
+        draw_pegs(color_row1, 10, j + 13);
+        draw_pegs(color_row2, 11, j + 13);
+		color_row1 = next(color_row1);
+		color_row2 = next(color_row2);
     }
 
 }
 
 void draw_menu(int level, int player_count) {
 
-    set_font_color(BLACK);
+    set_font_color(color::black);
     set_background_color(BOARD_COLOR);
 
     set_cursor(menu_row_margin + 2, menu_col_margin);
@@ -200,14 +204,14 @@ void draw_menu(int level, int player_count) {
     draw_square(menu_row_margin + 4, menu_col_margin - 2, 10, 1, BOARD_COLOR);
 
     /// Draw level marker.
-    draw_square(menu_row_margin + level, menu_col_margin - 2, 1, 1, BLUE);
+    draw_square(menu_row_margin + level, menu_col_margin - 2, 1, 1, color::blue);
 
     /// Draw player count marker.
-    draw_square(menu_row_margin + player_count + 11, menu_col_margin - 2, 1, 1, BLUE);
+    draw_square(menu_row_margin + player_count + 11, menu_col_margin - 2, 1, 1, color::blue);
 }
 
 /// Shows the hidden code when game over (lost or won).
-void show_hidden_code(vector<int> &code) {
+void show_hidden_code(const code_pegs& code) {
     for (int i = 0; i < code.size(); ++i) {
         draw_pegs(code[i], 0, i);
     }

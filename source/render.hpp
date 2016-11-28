@@ -1,13 +1,11 @@
-
-#ifndef MASTERMIND_RENDER_H
-#define MASTERMIND_RENDER_H
-
+#pragma once
 #include <string>
 #include <vector>
+#include "code_pegs.hpp"
 
-void set_font_color(int color);
+void set_font_color(color color);
 
-void set_background_color(int color);
+void set_background_color(color color);
 
 void clear_screen();
 
@@ -17,13 +15,13 @@ void hide_cursor();
 
 void show_cursor();
 
-void draw_square(int row, int col, int height, int width, int color);
+void draw_square(int row, int col, int height, int width, color color);
 
 void draw_ascii_art(std::vector<std::string> art, int row, int col);
 
-void draw_pegs(int color, int row, int col);
+void draw_pegs(color color, int row, int col);
 
-void draw_feedback(int color, int row, int col, int problem_size);
+void draw_feedback(color color, int row, int col, int problem_size);
 
 void draw_col_marker(int row, int col, int problem_size);
 
@@ -31,7 +29,7 @@ void draw_new_game(int problem_size);
 
 void draw_menu(int level, int player_count);
 
-void show_hidden_code(std::vector<int> &code);
+void show_hidden_code(const code_pegs& code);
 
 void initialize_terminal();
 
@@ -42,25 +40,15 @@ void reset_terminal();
  * Mastermind specific output settings.
  */
 
-#define  BLACK        0
-#define  RED          1
-#define  GREEN        2
-#define  YELLOW       3
-#define  BLUE         4
-#define  PURPLE       5
-#define  CYAN         6
-#define  WHITE        7
-
-#define COLOR_COUNT    8
 
 /// Game colors
-#define  MARKER                 239
-#define  BOARD_COLOR            242
-#define  UNMARKED_COLOR         245
-#define  HIDDEN_CODE_COLOR       68
+#define  MARKER                 color::grey1
+#define  BOARD_COLOR            color::grey2
+#define  UNMARKED_COLOR         color::grey3
+#define  HIDDEN_CODE_COLOR      color::custom1
 
-#define  CORRECT_POS_COLOR        1
-#define  CORRECT_COLOR            7
+#define  CORRECT_POS_COLOR        color::red
+#define  CORRECT_COLOR            color::white
 
 /// Game dimmensions
 const int board_height      = 55;
@@ -103,6 +91,3 @@ const int col_row_margin    = 8;
 const int game_height       = board_height + game_row_margin;
 const int game_width        = board_width + game_col_margin;
 
-
-
-#endif //MASTERMIND_RENDER_H

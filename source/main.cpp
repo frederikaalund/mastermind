@@ -1,53 +1,66 @@
 #include <iostream>
 #include <random>
 #include <algorithm>
+#include <boost/range/adaptor/filtered.hpp>
+#include <boost/range/algorithm/find.hpp>
+#include <boost/range/combine.hpp>
 #include "render.hpp"
 
 using namespace std;
+namespace adaptors = boost::adaptors;
+namespace range = boost::range;
+using boost::size;
+using boost::get;
 
-int problem_size = 4;
+template<typename CodePegsIterator>
+void wasd_movement(char cmd, code_pegs& code, CodePegsIterator& peg) {
+	switch (cmd) {
+		case 'w':
+			++*peg;
+			break;
 
-void play(const vector<int> &code) {
+		case 's':
+			--*peg;
+			break;
+
+		case 'd':
+			peg = next(peg);
+			if (code.end() == peg)
+				peg = code.begin();
+			break;
+
+		case 'a':
+			if (code.begin() == peg)
+				peg = code.end();
+			peg = prev(peg);
+			break;
+	}
+}
+
+void play(const code_pegs& code) {
 
     /// We always start with 12 guesses - the zero row is the hidden code.
     int guess_counter = 12;
-    int current_guess_index = 0;
 
     /// The current guess - all initialized to the first color - black.
-    vector<int> guess((unsigned long) problem_size);
+    auto guess = code_pegs_presets::all_black(code.size());
+	auto peg = guess.begin();
 
-    /// Dummy value -  do not use in the switch!
-    char cmd = '-';
-    while ('q' != cmd) {
-
+    char cmd;
+	do {
         /// Re-draw the guess and marker after each change.
         for (int k = 0; k < guess.size(); ++k) {
             draw_pegs(guess[k], guess_counter, k);
         }
-        draw_col_marker(guess_counter, current_guess_index, problem_size);
+        draw_col_marker(guess_counter, distance(guess.begin(), peg), code.size());
 
         cmd = (char) getchar();
         switch (cmd) {
             case 'w':
-                guess[current_guess_index] = (guess[current_guess_index] + 1) % COLOR_COUNT;
-                break;
-
-            case 's':
-                guess[current_guess_index]--;
-                if (guess[current_guess_index] < 0) {
-                    guess[current_guess_index] = COLOR_COUNT - 1;
-                }
-                break;
-
-            case 'd':
-                current_guess_index = (current_guess_index + 1) % problem_size;
-                break;
-
             case 'a':
-                current_guess_index--;
-                if (current_guess_index < 0) {
-                    current_guess_index = problem_size - 1;
-                }
+            case 's':
+            case 'd':
+				wasd_movement(cmd, guess, peg);
                 break;
 
             case ' ':
@@ -57,127 +70,82 @@ void play(const vector<int> &code) {
                     return;
                 }
 
+
                 /// Make a copy of the code and guess, which can be changed.
-                vector<int> tmp_code = code;
-                vector<int> tmp_guess = guess;
+                code_pegs tmp_code;
+                code_pegs tmp_guess;
+				auto unequal = range::combine(code, guess)
+					| adaptors::filtered([](auto cg) { return get<0>(cg) != get<1>(cg); });
+				for (auto p : unequal) {
+					tmp_code.push_back(get<0>(p));
+					tmp_guess.push_back(get<1>(p));
+				}
 
-                int correct_guess_counter = 0;
-                int correct_color_counter = 0;
+				// Number of elements which are equal
+				int correct_guess_counter = size(code) - size(tmp_code);
 
-                /// Count the corect placed gusses. By comparing the guess
-                /// to the code - index by index.
-                for (int i = 0; i < guess.size(); ++i) {
-                    if (tmp_code[i] == tmp_guess[i]) {
-                        correct_guess_counter++;
-                        ///
-                        tmp_code[i] = -1;
-                        tmp_guess[i] = -1;
-                    }
-                }
+				for (auto p : tmp_code) {
+					auto f = range::find(tmp_guess, p);
+					if (end(tmp_guess) != f) {
+						iter_swap(f, prev(tmp_guess.end()));
+						tmp_guess.pop_back();
+					}
+				}
 
-                /// Determine the number of correct colors, at incorrect position.
-                for (int i = 0; i < guess.size(); ++i) {
-                    /// If color not found in the solution - then.
-                    if (tmp_code[i] >= 0) {
-                        /// Search for a correct color in the set of guesses.
-                        for (int j = 0; j < guess.size(); ++j) {
-                            /// If the code color is uniq found in the guess:
-                            if (tmp_code[i] == tmp_guess[j]) {
-                                correct_color_counter++;
-                                tmp_code[i] = -1;
-                                tmp_guess[j] = -1;
-                                break;
-                            }
-                        }
-                    }
-                }
-
+				int correct_color_counter = size(tmp_code) - size(tmp_guess);
 
                 /// Print the feedback to the current guess. The feedback should not
                 /// indicate the position of the found feedback. Therefore the
                 /// feedback is printed in order of: correct guess and then
                 for (int j = 0; j < correct_guess_counter; ++j) {
-                    draw_feedback(CORRECT_POS_COLOR, guess_counter, j, problem_size);
+                    draw_feedback(CORRECT_POS_COLOR, guess_counter, j, code.size());
                 }
                 for (int j = correct_guess_counter; j < correct_color_counter + correct_guess_counter; ++j) {
-                    draw_feedback(CORRECT_COLOR, guess_counter, j, problem_size);
+                    draw_feedback(CORRECT_COLOR, guess_counter, j, code.size());
                 }
 
                 /// If all colors was found in the correct position, the game is won.
-                if (problem_size == correct_guess_counter) {
+                if (code.size() == correct_guess_counter) {
                     return;
                 }
 
                 guess_counter--;
                 break;
-        }
-    }
-    return;
+        } 
+    } while ('q' != cmd);
 }
 
+void set_new_code(code_pegs& code) {
+	assert(!code.empty());
 
-void set_new_code(vector<int> &code) {
+    /// Reset the code to the default black, while resizing.
+	code = code_pegs_presets::all_black(code.size());
 
-    /// Reset the code to the default black, while resizeing.
-    code.assign((unsigned long) problem_size, 0);
+	auto peg = code.begin();
 
-    int current_index = 0;
-
-    /// Dummy value -  do not use in the switch!
-    char cmd = '-';
-    while ('q' != cmd) {
-
+    char cmd;
+	do {
         for (int k = 0; k < code.size(); ++k) {
             draw_pegs(code[k], 0, k);
         }
-        draw_col_marker(0, current_index, problem_size);
+        draw_col_marker(0, distance(code.begin(), peg), code.size());
 
         cmd = (char) getchar();
         switch (cmd) {
             case 'w':
-                code[current_index] = (code[current_index] + 1) % 8;
-                break;
-
-            case 's':
-                code[current_index]--;
-                if (code[current_index] < 0) {
-                    code[current_index] = 7;
-                }
-                break;
-
-            case 'd':
-                current_index = (current_index + 1) % problem_size;
-                break;
-
             case 'a':
-                current_index--;
-                if (current_index < 0) {
-                    current_index = problem_size - 1;
-                }
+            case 's':
+            case 'd':
+				wasd_movement(cmd, code, peg);
                 break;
-
             case ' ':
                 return;
         }
-    }
+    } while ('q' != cmd);
 }
 
 
-void make_random_code(vector<int> &code) {
-
-    /// Make a new random problem with the available colors.
-    /// We do not allow duplicates in the random code.
-    vector<int> new_code = {0, 1, 2, 3, 4, 5, 6, 7};
-
-    random_device rd;
-    mt19937 mt(rd());
-    shuffle(new_code.begin(), new_code.end(), mt);
-
-    code.assign(new_code.begin(), new_code.begin() + problem_size);
-}
-
-
-int setup_new_game(vector<int> &code) {
+int setup_new_game(code_pegs& code) {
 
     int player_count = 1;
     /// Dummy value -  do not use in the switch!
@@ -185,7 +153,7 @@ int setup_new_game(vector<int> &code) {
     while ('q' != cmd) {
 
         /// Redraw the menu, showing the current settings.
-        draw_menu(problem_size, player_count);
+        draw_menu(code.size(), player_count);
 
         cmd = (char) getchar();
         switch (cmd) {
@@ -196,20 +164,20 @@ int setup_new_game(vector<int> &code) {
                 player_count = 2;
                 break;
             case '4':
-                problem_size = 4;
+				code.resize(4);
                 break;
             case '6':
-                problem_size = 6;
+				code.resize(6);
                 break;
             case '8':
-                problem_size = 8;
+				code.resize(8);
                 break;
             case ' ':
                 if (1 == player_count) {
-                    make_random_code(code);
+					code = code_pegs_presets::unique_shuffle(code.size());
                 } else {
                     /// Clear previous games, before the user select a new code.
-                    draw_new_game(problem_size);
+                    draw_new_game(code.size());
                     set_new_code(code);
                 }
                 return 1;
@@ -222,16 +190,15 @@ int setup_new_game(vector<int> &code) {
 
 
 int main() {
-
-    vector<int> code;
+    code_pegs code(4);
 
     /// Clear and setup the terminal before the game interact with the user.
     initialize_terminal();
-    draw_new_game(problem_size);
+    draw_new_game(code.size());
 
     while (setup_new_game(code)) {
 
-        draw_new_game(problem_size);
+        draw_new_game(code.size());
 
         play(code);
 
